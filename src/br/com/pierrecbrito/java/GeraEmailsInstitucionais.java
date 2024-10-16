@@ -10,6 +10,8 @@ import java.util.Random;
 import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GeraEmailsInstitucionais {
     static final String URL_FONTE = "https://dados.ufrn.br/api/action/datastore_search?resource_id=6a8e5461-e748-45c6-aac6-432188d88dde";
@@ -70,20 +72,37 @@ public class GeraEmailsInstitucionais {
     }
 
     /***
-     * Gera o email institucional de um docente
+     * Gera o email institucional de um docente com seu nome inicial e o último nome
      * @param nomeCompleto - Nome completo do docente
-     * @return - Email institucional do docente
+     * @return - Email institucional do docente simples+
      */
-    public static String gerarEmail(String nomeCompleto) {
+    public static String gerarEmailSimples(String nomeCompleto) {
         String primeiroNome = nomeCompleto.split(" ")[0];
-        String sobrenome = nomeCompleto.split(" ")[1];
-
-        if(isPreposicao(sobrenome)) {
-            sobrenome = nomeCompleto.split(" ")[2];
-        }
+        String sobrenome = nomeCompleto.split(" ")[nomeCompleto.split(" ").length - 1];
 
         String email = primeiroNome.toLowerCase() + "." +  sobrenome.toLowerCase() + "@ufrn.edu.br";
         return email;
+    }
+
+    /***
+     * Gera o email institucional de um docente com todos os seus nomes
+     * @param nomeCompleto - Nome completo do docente
+     * @return - Email institucional do docente complexo
+     */
+    public static String gerarEmailComplexo(String nomeCompleto) {
+        String[] nomeSeparado = nomeCompleto.split(" ");
+        StringBuilder email = new StringBuilder();
+
+        for(int i = 0; i < nomeSeparado.length; i++) {
+            if(!isPreposicao(nomeSeparado[i]) && i != nomeSeparado.length - 1) {
+               email.append(nomeSeparado[i].toLowerCase() + ".");
+            } else if(i == nomeSeparado.length - 1) {
+                email.append(nomeSeparado[i].toLowerCase());
+            }
+        }
+
+        email = email.append("@ufrn.edu.br");
+        return email.toString();
     }
 
     /***
@@ -106,13 +125,19 @@ public class GeraEmailsInstitucionais {
     public static void main(String[] args) {
         JSONArray docentes = carregarDados();
         Set<Integer> indices = gerarIndices(docentes.length());
+        List<String> emails = new ArrayList<>();
 
         for (Integer indice : indices) {
             JSONObject docente = docentes.getJSONObject(indice);
             String nome = docente.getString("nome");
-            String email = gerarEmail(nome);
+            String email = gerarEmailSimples(nome);
+            if(emails.contains(email)) {
+                email = gerarEmailComplexo(nome);
+            }
+            emails.add(email);
             System.out.println(nome + " - " + email);
         }
 
+        System.out.println("PIERRE CARLOS DE BRITO - " + gerarEmailComplexo("PIERRE CARLOS DE BRITO"));
     }
 }
